@@ -100,7 +100,14 @@ class AuthenticationViewModel extends _$AuthenticationViewModel {
     if (!isExistAccount) {
       _repository.setIsExistAccount(true);
     }
-    await upsertProfile(session.user);
+    
+    // upsertProfile 用 try-catch 包裹，避免 profile 操作失败导致整个登录流程崩溃
+    try {
+      await upsertProfile(session.user);
+    } catch (e) {
+      debugPrint('${Constants.tag} [AuthenticationViewModel.handleResult] upsertProfile error (ignored): $e');
+      // 继续登录流程，profile 问题不应阻止登录
+    }
     _repository.setIsLogin(true);
 
     state = AsyncData(
@@ -123,12 +130,17 @@ class AuthenticationViewModel extends _$AuthenticationViewModel {
     }
     
     // Use upsert to create or update profile
-    await ref.read(profileViewModelProvider.notifier).upsertProfile(
-      userId: user.id,
-      email: user.email,
-      name: name,
-      avatar: avatar,
-    );
+    try {
+      await ref.read(profileViewModelProvider.notifier).upsertProfile(
+        userId: user.id,
+        email: user.email,
+        name: name,
+        avatar: avatar,
+      );
+    } catch (e) {
+      debugPrint('${Constants.tag} [AuthenticationViewModel.upsertProfile] Error: $e');
+      rethrow;
+    }
   }
 
   @Deprecated('Use upsertProfile instead')

@@ -72,10 +72,17 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     if (event == AuthChangeEvent.signedIn && session != null) {
       // 只有在当前页面是 RegisterScreen 时才执行跳转，避免重复跳转
       if (mounted && GoRouterState.of(context).uri.toString() == Routes.register) {
-        ref
-            .read(authenticationViewModelProvider.notifier)
-            .upsertProfile(session.user);
-        context.go(Routes.home);
+        try {
+          await ref
+              .read(authenticationViewModelProvider.notifier)
+              .upsertProfile(session.user);
+        } catch (e) {
+          debugPrint('${Constants.tag} [RegisterScreen._onAuthStateChange] upsertProfile error: $e');
+          // 继续跳转，profile 问题不应阻止导航
+        }
+        if (mounted) {
+          context.go(Routes.home);
+        }
       }
     }
   }

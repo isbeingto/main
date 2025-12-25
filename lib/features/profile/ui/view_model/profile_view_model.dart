@@ -24,8 +24,14 @@ class ProfileViewModel extends _$ProfileViewModel {
   @override
   FutureOr<ProfileState> build() async {
     _repository = ref.read(profileRepositoryProvider);
-    final profile = await _repository.get();
-    return ProfileState(profile: profile);
+    try {
+      final profile = await _repository.get();
+      return ProfileState(profile: profile);
+    } catch (e) {
+      debugPrint('${Constants.tag} [ProfileViewModel.build] Error: $e');
+      // 返回空状态而不是抛异常，避免崩溃
+      return const ProfileState(profile: null);
+    }
   }
 
   Future<void> updateProfile({

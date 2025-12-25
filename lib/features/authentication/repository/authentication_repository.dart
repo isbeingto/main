@@ -150,6 +150,9 @@ class AuthenticationRepository {
     }
   }
 
+  /// RevenueCat 是否已配置（main.dart 中可能被注释掉）
+  static const bool _revenueCatConfigured = false;
+
   Future<void> signOut() async {
     if (_useFakeAuth) {
       // TODO: fake data
@@ -158,7 +161,14 @@ class AuthenticationRepository {
 
     try {
       await supabase.auth.signOut();
-      Purchases.logOut();
+      // 只有在 RevenueCat 已配置时才调用 logOut
+      if (_revenueCatConfigured) {
+        try {
+          Purchases.logOut();
+        } catch (e) {
+          debugPrint('${Constants.tag} [AuthenticationRepository.signOut] RevenueCat logOut error (ignored): $e');
+        }
+      }
     } on AuthException catch (error) {
       throw Exception(error.message);
     } catch (error) {
